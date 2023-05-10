@@ -16,65 +16,51 @@ private const val ALGORITHM = "AES"
 private const val TRANSFORMATION = "AES"
 
 /**
- * Encrypt file
+ * Encrypt or decrypt files.
  *
+ * @param cipherMode Cipher mode, can be Cipher.DECRYPT_MODE or Cipher.ENCRYPT_MODE
  * @param key Cipher key
  * @param inputFile Source file
  * @param outputFile Destination file
  * @throws CryptoException
  */
-@Throws(CryptoException::class) fun encrypt(key: String, inputFile: File, outputFile: File) {
-  doCrypto(Cipher.ENCRYPT_MODE, key, inputFile, outputFile)
-}
-
-/**
- * Decrypt file
- *
- * @param key Cipher key
- * @param inputFile Source file
- * @param outputFile Destination file
- * @throws CryptoException
- */
-@Throws(CryptoException::class) fun decrypt(key: String, inputFile: File, outputFile: File) {
-  doCrypto(Cipher.DECRYPT_MODE, key, inputFile, outputFile)
-}
-
-@Throws(CryptoException::class) private fun doCrypto(
-  cipherMode: Int,
-  key: String,
-  inputFile: File,
-  outputFile: File
+@Throws(CryptoException::class)
+fun doCrypto(
+    cipherMode: Int,
+    key: String,
+    inputFile: File,
+    outputFile: File
 ) {
-  var inputStream: FileInputStream? = null
-  var outputStream: FileOutputStream? = null
-  try {
-    val secretKey = SecretKeySpec(key.toByteArray(), ALGORITHM)
-    val cipher = Cipher.getInstance(TRANSFORMATION)
-    cipher.init(cipherMode, secretKey)
-    inputStream = FileInputStream(inputFile)
-    val inputBytes = ByteArray(inputFile.length().toInt())
-    inputStream.read(inputBytes)
-    val outputBytes = cipher.doFinal(inputBytes)
-    outputStream = FileOutputStream(outputFile)
-    outputStream.write(outputBytes)
-  } catch (ex: Exception) {
-    ex.printStackTrace()
-    when (ex) {
-      is InvalidKeyException,
-      is BadPaddingException,
-      is IllegalBlockSizeException,
-      is IOException,
-      is NoSuchAlgorithmException -> throw CryptoException("Error encrypting/decrypting file", ex)
-
-      else -> throw ex
-    }
-  } finally {
+    var inputStream: FileInputStream? = null
+    var outputStream: FileOutputStream? = null
     try {
-      inputStream?.close()
-      outputStream?.flush()
-      outputStream?.close()
-    } catch (e: IOException) {
-      e.printStackTrace()
+        val secretKey = SecretKeySpec(key.toByteArray(), ALGORITHM)
+        val cipher = Cipher.getInstance(TRANSFORMATION)
+        cipher.init(cipherMode, secretKey)
+        inputStream = FileInputStream(inputFile)
+        val inputBytes = ByteArray(inputFile.length().toInt())
+        inputStream.read(inputBytes)
+        val outputBytes = cipher.doFinal(inputBytes)
+        outputStream = FileOutputStream(outputFile)
+        outputStream.write(outputBytes)
+    } catch (ex: Exception) {
+        ex.printStackTrace()
+        when (ex) {
+            is InvalidKeyException,
+            is BadPaddingException,
+            is IllegalBlockSizeException,
+            is IOException,
+            is NoSuchAlgorithmException -> throw CryptoException("Error encrypting/decrypting file", ex)
+
+            else -> throw ex
+        }
+    } finally {
+        try {
+            inputStream?.close()
+            outputStream?.flush()
+            outputStream?.close()
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
     }
-  }
 }
