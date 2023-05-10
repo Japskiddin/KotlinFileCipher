@@ -18,6 +18,10 @@ class CipherWorker {
      * @param args Entered parameters.
      */
     fun checkArguments(args: Array<String>) {
+        if (args.isEmpty()) {
+            throw IllegalArgumentException("No parameters found! Print --help for more information")
+        }
+        
         val optsList: MutableList<Option> = ArrayList()
         val doubleOptsList: MutableList<String> = ArrayList()
 
