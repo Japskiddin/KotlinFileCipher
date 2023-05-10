@@ -20,6 +20,6 @@ fun deleteDir(file: File) {
         }
     }
     if (!file.delete()) {
-        throw IOException("Failed to delete $file")
+        throw IOException("Failed to delete ${file.absolutePath}")
     }
 }

@@ -21,7 +21,7 @@ class CipherWorker {
         if (args.isEmpty()) {
             throw IllegalArgumentException("No parameters found! Print --help for more information")
         }
-        
+
         val optsList: MutableList<Option> = ArrayList()
         val doubleOptsList: MutableList<String> = ArrayList()
 
@@ -93,29 +93,30 @@ class CipherWorker {
         requireNotNull(dst) { "Expected arg \"-dst\"" }
         requireNotNull(key) { "Expected arg \"-key\"" }
 
-        val srcDir = File(src)
-        if (!srcDir.exists()) {
-            throw NullPointerException("Folder doesn't exists.")
-        }
-
-        if (!srcDir.isDirectory) {
-            throw NullPointerException("File isn't directory!")
+        val srcDir = File(src).apply {
+            if (!exists()) {
+                throw NullPointerException("Folder doesn't exists.")
+            }
+            if (!isDirectory) {
+                throw NullPointerException("File isn't directory!")
+            }
         }
 
         val files = srcDir.listFiles()
-        if (files == null || files.isEmpty()) {
+        if (files.isNullOrEmpty()) {
             throw NullPointerException("Folder is empty.")
         }
 
         val isEncrypt = type == Cipher.ENCRYPT_MODE
         val typeName = if (isEncrypt) "_encrypted" else "_decrypted"
         val dstPathName = dst + File.separator + "outputs" + typeName + File.separator + srcDir.name
-        val dstDir = File(dstPathName)
-        if (dstDir.exists()) {
-            try {
-                deleteDir(dstDir)
-            } catch (e: IOException) {
-                error(e.message.toString())
+        val dstDir = File(dstPathName).apply {
+            if (exists()) {
+                try {
+                    deleteDir(this)
+                } catch (e: IOException) {
+                    error(e.message.toString())
+                }
             }
         }
 
@@ -141,22 +142,24 @@ class CipherWorker {
      */
     private fun cipherFiles(files: Array<File>, dir: File, type: Int, key: String) {
         for (srcFile in files) {
-            if (srcFile.isDirectory) {
-                val list = srcFile.listFiles()
-                if (list != null && list.isNotEmpty()) {
-                    val dstDir = File(dir, srcFile.name)
-                    val created = dstDir.mkdirs()
-                    if (created) {
-                        cipherFiles(list, dstDir, type, key)
-                    }
-                }
-            } else {
-                val dstFile = File(dir, srcFile.name)
-                try {
-                    doCrypto(type, key, srcFile, dstFile)
-                } catch (ex: CryptoException) {
-                    error(ex.message.toString())
-                }
+            cipherFile(srcFile, dir, type, key)
+        }
+    }
+
+    private fun cipherFile(srcFile: File, dir: File, type: Int, key: String) {
+        if (srcFile.isDirectory) {
+            val list = srcFile.listFiles()
+            if (list.isNullOrEmpty()) return
+            val dstDir = File(dir, srcFile.name)
+            val created = dstDir.mkdirs()
+            if (!created) return
+            cipherFiles(list, dstDir, type, key)
+        } else {
+            val dstFile = File(dir, srcFile.name)
+            try {
+                doCrypto(type, key, srcFile, dstFile)
+            } catch (ex: CryptoException) {
+                error(ex.message.toString())
             }
         }
     }
